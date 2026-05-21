@@ -11,7 +11,7 @@ import { createClient } from "@supabase/supabase-js";
 
 const vapidPublicKey  = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "";
 const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY ?? "";
-const vapidEmail      = process.env.VAPID_EMAIL ?? "mailto:admin@coo.internal";
+const vapidEmail      = process.env.VAPID_EMAIL ?? "mailto:terpos77@gmail.com";
 
 if (vapidPublicKey && vapidPrivateKey) {
   webpush.setVapidDetails(vapidEmail, vapidPublicKey, vapidPrivateKey);

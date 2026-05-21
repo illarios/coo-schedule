@@ -37,14 +37,14 @@ export function AvailabilityGrid({
 }: AvailabilityGridProps) {
   const supabase = createClient();
 
-  // Map: userId+date → availability type
+  // Map: userId+date → availability types (array)
   const buildMap = (rows: AllAvailabilityRow[]) => {
-    const m: Record<string, AvailabilityType> = {};
+    const m: Record<string, AvailabilityType[]> = {};
     for (const r of rows) m[`${r.user_id}__${r.date}`] = r.availability;
     return m;
   };
 
-  const [cellMap, setCellMap] = useState<Record<string, AvailabilityType>>(
+  const [cellMap, setCellMap] = useState<Record<string, AvailabilityType[]>>(
     buildMap(initialRows)
   );
 
@@ -73,7 +73,7 @@ export function AvailabilityGrid({
   function coverageFor(dateStr: string) {
     let filled = 0;
     for (const emp of employees) {
-      if (cellMap[`${emp.id}__${dateStr}`]) filled++;
+      if ((cellMap[`${emp.id}__${dateStr}`] ?? []).length > 0) filled++;
     }
     return { filled, total: employees.length };
   }
@@ -132,27 +132,30 @@ export function AvailabilityGrid({
             {/* Availability cells */}
             {dates.map((d) => {
               const key = `${emp.id}__${d}`;
-              const avail = cellMap[key] as AvailabilityType | undefined;
-              const style = avail ? CELL_STYLES[avail] : null;
+              const types = cellMap[key] ?? [];
 
               return (
                 <div
                   key={d}
-                  className={cn(
-                    "flex items-center justify-center border-r border-coo-black/5 py-2.5",
-                    style ? style.bg : "bg-transparent"
-                  )}
-                  title={avail ? AVAILABILITY_CONFIG[avail].label : "Αδήλωτο"}
+                  className="flex flex-col items-center justify-center gap-0.5 border-r border-coo-black/5 py-1.5 min-h-[36px]"
+                  title={types.length ? types.map((t) => AVAILABILITY_CONFIG[t].label).join(", ") : "Αδήλωτο"}
                 >
-                  {style ? (
-                    <span
-                      className={cn(
-                        "font-archivo text-[10px] leading-none",
-                        style.text
-                      )}
-                    >
-                      {style.short}
-                    </span>
+                  {types.length > 0 ? (
+                    types.map((t) => {
+                      const style = CELL_STYLES[t];
+                      return (
+                        <span
+                          key={t}
+                          className={cn(
+                            "font-archivo text-[9px] leading-none px-1 py-0.5 w-full text-center",
+                            style.bg,
+                            style.text
+                          )}
+                        >
+                          {style.short}
+                        </span>
+                      );
+                    })
                   ) : (
                     <span className="w-1.5 h-1.5 rounded-full bg-coo-black/15" />
                   )}

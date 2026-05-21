@@ -89,7 +89,7 @@ npm run dev
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase → Project Settings → API → service_role |
 | `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | `npx web-push generate-vapid-keys` |
 | `VAPID_PRIVATE_KEY` | ίδιο |
-| `VAPID_EMAIL` | `mailto:admin@coo.internal` |
+| `VAPID_EMAIL` | `mailto:terpos77@gmail.com` |
 | `COO_INTERNAL_SECRET` | `openssl rand -hex 32` |
 
 ### Deploy steps
@@ -114,7 +114,7 @@ supabase secrets set \
   APP_URL=https://your-app.vercel.app \
   COO_INTERNAL_SECRET=<same-as-vercel> \
   VAPID_PRIVATE_KEY=<your-key> \
-  VAPID_EMAIL=mailto:admin@coo.internal
+  VAPID_EMAIL=mailto:terpos77@gmail.com
 
 # Deploy
 supabase functions deploy send-push-notification

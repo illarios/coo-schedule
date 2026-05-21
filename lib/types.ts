@@ -48,7 +48,7 @@ export interface Availability {
   id: string;
   user_id: string;
   date: string;
-  availability: AvailabilityType;
+  availability: AvailabilityType[];
   note: string | null;
   created_at: string;
 }
@@ -92,5 +92,5 @@ export interface WeekDay {
 export interface DaySchedule {
   date: string;
   shifts: Shift[];
-  availability: Availability | null;
+  availability: Availability | null; // availability.availability is now AvailabilityType[]
 }

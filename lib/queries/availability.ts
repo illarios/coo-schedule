@@ -26,7 +26,7 @@ export async function upsertAvailability(
   supabase: SupabaseClient,
   userId: string,
   date: string,
-  availability: AvailabilityType,
+  availability: AvailabilityType[],
   note?: string | null
 ): Promise<Availability> {
   const { data, error } = await supabase
@@ -46,7 +46,7 @@ export async function upsertAvailability(
 export interface AllAvailabilityRow {
   user_id: string;
   date: string;
-  availability: AvailabilityType;
+  availability: AvailabilityType[];
   note: string | null;
   nickname: string;
   full_name: string;
@@ -70,7 +70,7 @@ export async function getAllAvailability(
     const r = row as {
       user_id: string;
       date: string;
-      availability: AvailabilityType;
+      availability: AvailabilityType[];
       note: string | null;
       profiles: { nickname: string; full_name: string; color: string } | null;
     };

@@ -98,16 +98,16 @@ const ACTIVE_STYLES: Record<AvailabilityType, string> = {
 
 interface DayCardProps {
   day: DayInfo;
-  saved: AvailabilityType | null;
+  saved: AvailabilityType[];
   isSaving: boolean;
   disabled: boolean;
-  onSelect: (type: AvailabilityType, note: string | null) => void;
+  onSelect: (types: AvailabilityType[], note: string | null) => void;
 }
 
 function DayCard({ day, saved, isSaving, disabled, onSelect }: DayCardProps) {
   const [noteOpen, setNoteOpen] = useState(false);
   const [note, setNote] = useState("");
-  const [selected, setSelected] = useState<AvailabilityType | null>(saved);
+  const [selected, setSelected] = useState<AvailabilityType[]>(saved);
 
   // Keep in sync if parent provides new saved value
   const prevSaved = useRef(saved);
@@ -116,13 +116,25 @@ function DayCard({ day, saved, isSaving, disabled, onSelect }: DayCardProps) {
     setSelected(saved);
   }
 
-  function handleSelect(type: AvailabilityType) {
+  function handleToggle(type: AvailabilityType) {
     if (disabled) return;
-    setSelected(type);
-    onSelect(type, note || null);
+    let next: AvailabilityType[];
+    if (type === "off") {
+      // "off" is exclusive — clear everything else
+      next = selected.includes("off") ? [] : ["off"];
+    } else {
+      // toggling a work type deselects "off"
+      const without = selected.filter((t) => t !== "off");
+      next = without.includes(type)
+        ? without.filter((t) => t !== type)
+        : [...without, type];
+    }
+    setSelected(next);
+    onSelect(next, note || null);
   }
 
-  const isWeekend = [5, 6].includes(day.date.getDay()); // Sat=6, Sun=0 — adjust if needed
+  const isWeekend = [5, 6].includes(day.date.getDay());
+  const hasSaved = selected.length > 0;
 
   return (
     <div
@@ -136,9 +148,11 @@ function DayCard({ day, saved, isSaving, disabled, onSelect }: DayCardProps) {
       <div className="flex items-center justify-between mb-3">
         <div>
           <p className="font-archivo text-sm text-coo-black capitalize">{day.dayLabel}</p>
-          {selected && (
+          {hasSaved && (
             <p className="font-dm text-xs text-coo-black/50 mt-0.5">
-              {isSaving ? "Αποθήκευση…" : `✓ ${AVAILABILITY_CONFIG[selected].label}`}
+              {isSaving
+                ? "Αποθήκευση…"
+                : `✓ ${selected.map((t) => AVAILABILITY_CONFIG[t].label).join(" · ")}`}
             </p>
           )}
         </div>
@@ -146,7 +160,7 @@ function DayCard({ day, saved, isSaving, disabled, onSelect }: DayCardProps) {
         <span
           className={cn(
             "w-2.5 h-2.5 rounded-full border-2 border-coo-black transition-colors",
-            selected ? "bg-coo-yellow" : "bg-transparent"
+            hasSaved ? "bg-coo-yellow" : "bg-transparent"
           )}
         />
       </div>
@@ -154,11 +168,11 @@ function DayCard({ day, saved, isSaving, disabled, onSelect }: DayCardProps) {
       {/* 2×2 button grid */}
       <div className="grid grid-cols-2 gap-2">
         {AVAIL_BUTTONS.map(({ type, icon, label }) => {
-          const isActive = selected === type;
+          const isActive = selected.includes(type);
           return (
             <button
               key={type}
-              onClick={() => handleSelect(type)}
+              onClick={() => handleToggle(type)}
               disabled={disabled}
               className={cn(
                 "flex items-center gap-2 px-3 py-2.5 border-2 font-dm text-sm font-medium",
@@ -196,7 +210,7 @@ function DayCard({ day, saved, isSaving, disabled, onSelect }: DayCardProps) {
           value={note}
           onChange={(e) => setNote(e.target.value)}
           onBlur={() => {
-            if (selected) onSelect(selected, note || null);
+            if (hasSaved) onSelect(selected, note || null);
           }}
           disabled={disabled}
           placeholder="πχ. φεύγω νωρίτερα…"
@@ -224,9 +238,9 @@ export function AvailabilityForm({ userId, initial }: AvailabilityFormProps) {
   const deadline = getDeadline();
   const { label: countdownLabel, expired } = useCountdown(deadline);
 
-  // Map dateStr → saved availability
-  const [saved, setSaved] = useState<Record<string, AvailabilityType>>(() => {
-    const map: Record<string, AvailabilityType> = {};
+  // Map dateStr → saved availability (array)
+  const [saved, setSaved] = useState<Record<string, AvailabilityType[]>>(() => {
+    const map: Record<string, AvailabilityType[]> = {};
     for (const a of initial) map[a.date] = a.availability;
     return map;
   });
@@ -236,16 +250,16 @@ export function AvailabilityForm({ userId, initial }: AvailabilityFormProps) {
   const timers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
   const handleSelect = useCallback(
-    (dateStr: string, type: AvailabilityType, note: string | null) => {
+    (dateStr: string, types: AvailabilityType[], note: string | null) => {
       // Optimistic
-      setSaved((prev) => ({ ...prev, [dateStr]: type }));
+      setSaved((prev) => ({ ...prev, [dateStr]: types }));
 
       // Debounce 400ms
       if (timers.current[dateStr]) clearTimeout(timers.current[dateStr]);
       timers.current[dateStr] = setTimeout(async () => {
         setSaving((p) => ({ ...p, [dateStr]: true }));
         try {
-          await upsertAvailability(supabase, userId, dateStr, type, note);
+          await upsertAvailability(supabase, userId, dateStr, types, note);
           toast.success("✓ Αποθηκεύτηκε", {
             id: `avail-${dateStr}`,
             duration: 1800,
@@ -267,7 +281,7 @@ export function AvailabilityForm({ userId, initial }: AvailabilityFormProps) {
   );
 
   const totalFilled = Object.keys(saved).filter(
-    (d) => d >= from && d <= to
+    (d) => d >= from && d <= to && saved[d].length > 0
   ).length;
 
   return (
@@ -307,10 +321,10 @@ export function AvailabilityForm({ userId, initial }: AvailabilityFormProps) {
           <DayCard
             key={day.dateStr}
             day={day}
-            saved={saved[day.dateStr] ?? null}
+            saved={saved[day.dateStr] ?? []}
             isSaving={saving[day.dateStr] ?? false}
             disabled={expired}
-            onSelect={(type, note) => handleSelect(day.dateStr, type, note)}
+            onSelect={(types, note) => handleSelect(day.dateStr, types, note)}
           />
         ))}
       </div>
