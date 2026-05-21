@@ -198,71 +198,108 @@ function NotificationList({ notifications, onTap, onMarkAllRead, hasUnread }: No
   );
 }
 
-// ── Install banner ─────────────────────────────────────────────────────────
+// ── Install banner — Android (beforeinstallprompt) + iOS (manual steps) ────
+
+type InstallMode = "android" | "ios" | null;
 
 function InstallBanner() {
-  const [prompt, setPrompt] = useState<Event & { prompt?: () => Promise<void> } | null>(null);
+  const [mode, setMode]       = useState<InstallMode>(null);
   const [dismissed, setDismissed] = useState(false);
+  const [androidPrompt, setAndroidPrompt] = useState<Event & { prompt?: () => Promise<void> } | null>(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    // Only show after a second visit
+    if (localStorage.getItem("coo-install-dismissed")) return;
+
     const visits = parseInt(localStorage.getItem("coo-visits") ?? "0", 10) + 1;
     localStorage.setItem("coo-visits", String(visits));
-
     if (visits < 2) return;
-    if (localStorage.getItem("coo-install-dismissed")) return;
+
+    const ua = navigator.userAgent;
+    const isIos = /iphone|ipad|ipod/i.test(ua);
+    const isInStandaloneMode = ("standalone" in navigator && (navigator as { standalone?: boolean }).standalone === true)
+      || window.matchMedia("(display-mode: standalone)").matches;
+
+    if (isInStandaloneMode) return; // already installed
+
+    if (isIos) {
+      setMode("ios");
+      return;
+    }
 
     const handler = (e: Event) => {
       e.preventDefault();
-      setPrompt(e as Event & { prompt?: () => Promise<void> });
+      setAndroidPrompt(e as Event & { prompt?: () => Promise<void> });
+      setMode("android");
     };
     window.addEventListener("beforeinstallprompt", handler);
     return () => window.removeEventListener("beforeinstallprompt", handler);
   }, []);
-
-  if (!prompt || dismissed) return null;
-
-  async function handleInstall() {
-    if (prompt && "prompt" in prompt && typeof prompt.prompt === "function") {
-      await prompt.prompt();
-    }
-    setDismissed(true);
-  }
 
   function handleDismiss() {
     localStorage.setItem("coo-install-dismissed", "1");
     setDismissed(true);
   }
 
+  async function handleAndroidInstall() {
+    if (androidPrompt && "prompt" in androidPrompt && typeof androidPrompt.prompt === "function") {
+      await androidPrompt.prompt();
+    }
+    handleDismiss();
+  }
+
+  if (!mode || dismissed) return null;
+
   return (
-    <div
-      className="fixed bottom-[72px] left-1/2 -translate-x-1/2 w-full max-w-phone px-4 z-50
-                 pointer-events-none"
-    >
+    <div className="fixed bottom-[72px] left-1/2 -translate-x-1/2 w-full max-w-phone px-4 z-50 pointer-events-none">
       <div
-        className="pointer-events-auto bg-white border-2 border-coo-black p-4 flex items-center gap-3"
+        className="pointer-events-auto bg-white border-2 border-coo-black p-4"
         style={{ boxShadow: "4px 4px 0 #FFD800" }}
       >
-        <img src="/icons/icon-192.png" alt="" className="w-10 h-10 shrink-0 border border-coo-black/20" />
-        <div className="flex-1 min-w-0">
-          <p className="font-archivo text-sm text-coo-black">Εγκατέστησε το COO</p>
-          <p className="font-dm text-xs text-coo-black/55">Πρόγραμμα βαρδιών πάντα διαθέσιμο</p>
-        </div>
-        <button
-          onClick={handleInstall}
-          className="font-archivo text-xs px-3 py-2 bg-coo-black text-coo-yellow border-2 border-coo-black shrink-0"
-          style={{ boxShadow: "2px 2px 0 #FFD800" }}
-        >
-          Εγκατάσταση
-        </button>
-        <button
-          onClick={handleDismiss}
-          className="text-coo-black/40 hover:text-coo-black transition-colors shrink-0"
-          aria-label="Κλείσιμο"
-        >
-          <X size={16} />
-        </button>
+        {mode === "android" ? (
+          <div className="flex items-center gap-3">
+            <img src="/icons/icon-192.png" alt="" className="w-10 h-10 shrink-0 border border-coo-black/20" />
+            <div className="flex-1 min-w-0">
+              <p className="font-archivo text-sm text-coo-black">Εγκατέστησε το COO</p>
+              <p className="font-dm text-xs text-coo-black/55">Πρόγραμμα βαρδιών πάντα διαθέσιμο</p>
+            </div>
+            <button
+              onClick={handleAndroidInstall}
+              className="font-archivo text-xs px-3 py-2 bg-coo-black text-coo-yellow border-2 border-coo-black shrink-0"
+              style={{ boxShadow: "2px 2px 0 #FFD800" }}
+              aria-label="Εγκατάσταση εφαρμογής"
+            >
+              Εγκατάσταση
+            </button>
+            <button onClick={handleDismiss} className="text-coo-black/40 hover:text-coo-black shrink-0" aria-label="Κλείσιμο">
+              <X size={16} />
+            </button>
+          </div>
+        ) : (
+          /* iOS — no API, show manual steps */
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <p className="font-archivo text-sm text-coo-black">Πρόσθεσε στην Αρχική</p>
+              <button onClick={handleDismiss} className="text-coo-black/40 hover:text-coo-black" aria-label="Κλείσιμο">
+                <X size={16} />
+              </button>
+            </div>
+            <ol className="font-dm text-xs text-coo-black/70 space-y-1 list-none">
+              <li className="flex items-start gap-2">
+                <span className="text-base leading-none mt-0.5">1.</span>
+                <span>Πάτα <strong>Share</strong> <span className="text-base">⎙</span> στο κάτω μέρος του Safari</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-base leading-none mt-0.5">2.</span>
+                <span>Επίλεξε <strong>"Add to Home Screen"</strong> <span className="text-base">＋</span></span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-base leading-none mt-0.5">3.</span>
+                <span>Πάτα <strong>Add</strong> πάνω δεξιά</span>
+              </li>
+            </ol>
+          </div>
+        )}
       </div>
     </div>
   );

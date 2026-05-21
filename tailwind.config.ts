@@ -16,9 +16,9 @@ const config: Config = {
         "coo-paper": "#FFFBEA",
       },
       fontFamily: {
-        archivo: ["'Archivo Black'", "sans-serif"],
-        dm: ["'DM Sans'", "sans-serif"],
-        marker: ["'Permanent Marker'", "cursive"],
+        archivo: ["var(--font-archivo)", "sans-serif"],
+        dm: ["var(--font-dm)", "sans-serif"],
+        marker: ["var(--font-marker)", "cursive"],
       },
       boxShadow: {
         brutal: "4px 4px 0 #0A0A0A",
