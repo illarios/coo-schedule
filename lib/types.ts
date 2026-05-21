@@ -10,6 +10,7 @@ export type NotificationType =
   | "shift_changed"
   | "swap_request"
   | "swap_approved"
+  | "swap_rejected"
   | "reminder";
 
 // ── Database rows ──────────────────────────────────────────────────────────

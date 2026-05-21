@@ -9,30 +9,25 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  // Fetch profile
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("*")
     .eq("id", user.id)
     .single();
 
-  if (profileError || !profile) {
-    // Profile missing — sign out and redirect
-    redirect("/login");
-  }
+  if (profileError || !profile) redirect("/login");
 
-  // Fetch latest 20 notifications
   const { data: notifications } = await supabase
     .from("notifications")
     .select("*")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
-    .limit(20);
+    .limit(30);
 
   return (
     <AppShell
       profile={profile as Profile}
-      notifications={(notifications ?? []) as AppNotification[]}
+      initialNotifications={(notifications ?? []) as AppNotification[]}
     >
       {children}
     </AppShell>
