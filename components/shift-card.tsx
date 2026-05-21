@@ -161,23 +161,30 @@ export function ShiftCard({
 
       {/* Employee chips */}
       <div className="flex flex-wrap gap-2">
-        {slots.map((row, i) =>
-          row ? (
-            <EmpChip
-              key={row.shift_id}
-              row={row}
-              dark={style.dark}
-              isCurrentUser={row.employee_id === currentUserId}
-              onClick={() => onSlotClick?.(row, shiftType)}
-            />
+        {slots.map((row, i) => {
+          const isCurrentUser = row?.employee_id === currentUserId;
+          return row ? (
+            <div key={row.shift_id} className="flex flex-col gap-1">
+              <EmpChip
+                row={row}
+                dark={style.dark}
+                isCurrentUser={isCurrentUser}
+                onClick={() => onSlotClick?.(row, shiftType)}
+              />
+              {isCurrentUser && !isAdmin && (
+                <span className="font-dm text-[10px] text-coo-red text-center leading-none">
+                  πάτα για αλλαγή
+                </span>
+              )}
+            </div>
           ) : (
             <EmptySlot
               key={`empty-${i}`}
               dark={style.dark}
               onClick={isAdmin ? () => onSlotClick?.(null, shiftType) : undefined}
             />
-          )
-        )}
+          );
+        })}
       </div>
     </div>
   );

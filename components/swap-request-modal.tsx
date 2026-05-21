@@ -194,10 +194,9 @@ export function SwapRequestModal({
                         {c.nickname}
                       </p>
                       <p className="font-dm text-xs text-coo-black/50">
-                        {AVAILABILITY_CONFIG[c.availability as keyof typeof AVAILABILITY_CONFIG]
-                          ?.icon ?? ""}{" "}
-                        {AVAILABILITY_CONFIG[c.availability as keyof typeof AVAILABILITY_CONFIG]
-                          ?.label ?? c.availability}
+                        {c.availability
+                          .map((a) => `${AVAILABILITY_CONFIG[a as keyof typeof AVAILABILITY_CONFIG]?.icon ?? ""} ${AVAILABILITY_CONFIG[a as keyof typeof AVAILABILITY_CONFIG]?.label ?? a}`)
+                          .join(" · ")}
                       </p>
                     </div>
                     {selected?.id === c.id && (

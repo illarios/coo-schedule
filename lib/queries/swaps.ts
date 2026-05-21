@@ -225,7 +225,7 @@ export interface AvailableColleague {
   full_name: string;
   color: string;
   avatar_url: string | null;
-  availability: string;
+  availability: string[];
 }
 
 export async function getAvailableColleagues(
@@ -233,34 +233,41 @@ export async function getAvailableColleagues(
   date: string,
   excludeUserId: string
 ): Promise<AvailableColleague[]> {
+  // availability is now text[] — fetch all rows for the date excluding self,
+  // then filter out those whose array contains only "off" or is empty
   const { data, error } = await supabase
     .from("availability")
     .select("user_id, availability, profiles!user_id(id, nickname, full_name, color, avatar_url)")
     .eq("date", date)
-    .neq("availability", "off")
     .neq("user_id", excludeUserId);
 
   if (error) throw error;
 
-  return ((data ?? []) as unknown[]).map((row: unknown) => {
-    const r = row as {
-      user_id: string;
-      availability: string;
-      profiles: {
-        id: string;
-        nickname: string;
-        full_name: string;
-        color: string;
-        avatar_url: string | null;
-      } | null;
-    };
-    return {
-      id: r.profiles?.id ?? r.user_id,
-      nickname: r.profiles?.nickname ?? "",
-      full_name: r.profiles?.full_name ?? "",
-      color: r.profiles?.color ?? "#FFD800",
-      avatar_url: r.profiles?.avatar_url ?? null,
-      availability: r.availability,
-    };
-  });
+  return ((data ?? []) as unknown[])
+    .map((row: unknown) => {
+      const r = row as {
+        user_id: string;
+        availability: string[];
+        profiles: {
+          id: string;
+          nickname: string;
+          full_name: string;
+          color: string;
+          avatar_url: string | null;
+        } | null;
+      };
+      return {
+        id: r.profiles?.id ?? r.user_id,
+        nickname: r.profiles?.nickname ?? "",
+        full_name: r.profiles?.full_name ?? "",
+        color: r.profiles?.color ?? "#FFD800",
+        avatar_url: r.profiles?.avatar_url ?? null,
+        availability: r.availability,
+      };
+    })
+    .filter((c) => {
+      // exclude if no availability or only "off"
+      const types = c.availability as string[];
+      return types.length > 0 && !(types.length === 1 && types[0] === "off");
+    });
 }
