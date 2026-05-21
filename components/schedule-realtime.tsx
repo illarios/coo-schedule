@@ -16,6 +16,7 @@ import { SHIFT_CONFIG } from "@/lib/constants";
 import {
   groupByDayAndType,
   assignShift,
+  createShift,
   getActiveEmployees,
   type WeekShiftRow,
   type DayShiftMap,
@@ -106,29 +107,47 @@ export function ScheduleRealtime({
     }
   }
 
-  async function handleAssign(employeeId: string | null) {
-    if (!slotTarget?.row) return;
-    const shiftId = slotTarget.row.shift_id;
+  const SHIFT_DEFAULTS: Record<ShiftType, { start_time: string; end_time: string; split_break_start?: string; split_break_end?: string }> = {
+    morning: { start_time: "08:00:00", end_time: "15:00:00" },
+    evening: { start_time: "16:00:00", end_time: "23:00:00" },
+    split:   { start_time: "11:00:00", end_time: "23:00:00", split_break_start: "15:00:00", split_break_end: "19:00:00" },
+  };
 
-    setRows((prev) =>
-      prev.map((r) => {
-        if (r.shift_id !== shiftId) return r;
-        const emp = employees.find((e) => e.id === employeeId);
-        return {
-          ...r,
-          employee_id: employeeId,
-          full_name: emp?.full_name ?? null,
-          nickname: emp?.nickname ?? null,
-          color: emp?.color ?? null,
-          avatar_url: emp?.avatar_url ?? null,
-        };
-      })
-    );
+  async function handleAssign(employeeId: string | null) {
+    if (!slotTarget) return;
     setSlotTarget(null);
 
     startTransition(async () => {
       try {
-        await assignShift(supabase, shiftId, employeeId);
+        if (slotTarget.row) {
+          // Update existing shift
+          const shiftId = slotTarget.row.shift_id;
+          setRows((prev) =>
+            prev.map((r) => {
+              if (r.shift_id !== shiftId) return r;
+              const emp = employees.find((e) => e.id === employeeId);
+              return {
+                ...r,
+                employee_id: employeeId,
+                full_name: emp?.full_name ?? null,
+                nickname: emp?.nickname ?? null,
+                color: emp?.color ?? null,
+                avatar_url: emp?.avatar_url ?? null,
+              };
+            })
+          );
+          await assignShift(supabase, shiftId, employeeId);
+        } else {
+          // Create new shift for the selected date + type
+          const defaults = SHIFT_DEFAULTS[slotTarget.shiftType];
+          await createShift(supabase, {
+            date: selectedDate,
+            shift_type: slotTarget.shiftType,
+            assigned_to: employeeId,
+            ...defaults,
+          });
+          // Realtime subscription will refetch automatically
+        }
         toast.success("Η βάρδια ανατέθηκε!");
       } catch {
         toast.error("Σφάλμα — δοκίμασε ξανά");
@@ -139,7 +158,22 @@ export function ScheduleRealtime({
 
   async function handleRemove() {
     if (!slotTarget?.row) return;
-    await handleAssign(null);
+    const shiftId = slotTarget.row.shift_id;
+    setSlotTarget(null);
+    startTransition(async () => {
+      try {
+        setRows((prev) =>
+          prev.map((r) =>
+            r.shift_id !== shiftId ? r : { ...r, employee_id: null, full_name: null, nickname: null, color: null, avatar_url: null }
+          )
+        );
+        await assignShift(supabase, shiftId, null);
+        toast.success("Υπάλληλος αφαιρέθηκε");
+      } catch {
+        toast.error("Σφάλμα — δοκίμασε ξανά");
+        refetchWeek();
+      }
+    });
   }
 
   // ── Render ────────────────────────────────────────────────────────────────
