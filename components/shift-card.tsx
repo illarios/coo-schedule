@@ -119,7 +119,9 @@ export function ShiftCard({
     ...Array(Math.max(0, expectedSlots - rows.length)).fill(null),
   ];
 
-  const SLOT_LABELS = ["Bar", "Σερβιτόρος", "Επιπλέον"];
+  const SLOT_LABELS = shiftType === "split"
+    ? ["Σερβιτόρος", "Επιπλέον"]
+    : ["Bar", "Σερβιτόρος", "Επιπλέον"];
 
   return (
     <div

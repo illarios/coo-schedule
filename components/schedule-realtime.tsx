@@ -244,8 +244,8 @@ export function ScheduleRealtime({
         title={
           slotTarget
             ? `${SHIFT_CONFIG[slotTarget.shiftType]?.label} — ${
-                slotTarget.slotIndex === 0 ? "Bar" : slotTarget.slotIndex === 1 ? "Σερβιτόρος" : "Επιπλέον"
-              }`
+                slotTarget.shiftType === "split" || slotTarget.slotIndex > 0 ? "Σερβιτόρος" : "Bar"
+              }${slotTarget.slotIndex > 1 ? ` ${slotTarget.slotIndex}` : ""}`
             : "Ανάθεση"
         }
       >
