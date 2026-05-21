@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useTransition } from "react";
 import { format } from "date-fns";
-import { Plus, AlertTriangle } from "lucide-react";
+import { Plus, AlertTriangle, Download } from "lucide-react";
 import toast from "react-hot-toast";
 
 import { createClient } from "@/lib/supabase/client";
@@ -193,6 +193,17 @@ export function ScheduleRealtime({
           <StatPill label="Καλυμμένες" value={3 - emptyCount} color="bg-coo-yellow" />
           <StatPill label="Κενές" value={emptyCount} color="bg-coo-red" textLight />
           <StatPill label="Αιτήσεις" value={pendingSwaps} color="bg-coo-sky" />
+          <a
+            href={`/schedule/print?week=${weekOffset}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="ml-auto flex items-center gap-1.5 px-3 py-1.5 border-2 border-coo-black
+                       bg-white font-dm text-xs text-coo-black hover:bg-coo-yellow transition-colors"
+            style={{ boxShadow: "2px 2px 0 #0A0A0A" }}
+          >
+            <Download size={12} />
+            Εκτύπωση
+          </a>
         </div>
       )}
 

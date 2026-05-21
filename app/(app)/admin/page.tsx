@@ -16,9 +16,8 @@ export default async function AdminPage() {
   if (!profile || profile.role !== "admin") redirect("/schedule");
 
   const links = [
-    { href: "/admin/swaps",     label: "Αιτήσεις Swap",   icon: "🔄" },
-    { href: "/admin/assign",    label: "Ανάθεση Βαρδιών", icon: "📅" },
-    { href: "/admin/employees", label: "Υπάλληλοι",        icon: "👥" },
+    { href: "/admin/swaps",     label: "Αιτήσεις Swap", icon: "🔄" },
+    { href: "/admin/employees", label: "Υπάλληλοι",      icon: "👥" },
   ];
 
   return (
