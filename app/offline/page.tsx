@@ -1,3 +1,5 @@
+"use client";
+
 export default function OfflinePage() {
   return (
     <div className="phone-shell flex flex-col items-center justify-center min-h-screen px-6 bg-coo-paper">
