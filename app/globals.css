@@ -1,27 +1,49 @@
+@import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Permanent+Marker&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --coo-yellow: #FFD800;
+  --coo-black: #0A0A0A;
+  --coo-red: #E63946;
+  --coo-sky: #7DD3FC;
+  --coo-paper: #FFFBEA;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    font-family: 'DM Sans', sans-serif;
+    background-color: var(--coo-paper);
+    color: var(--coo-black);
+  }
+
+  body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
-}
+@layer components {
+  /* Neo-brutalist button */
+  .btn {
+    @apply inline-flex items-center justify-center border-2 border-coo-black font-archivo
+           shadow-brutal active:shadow-none active:translate-x-1 active:translate-y-1
+           transition-all duration-75 cursor-pointer select-none;
+  }
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
+  /* Neo-brutalist card */
+  .card {
+    @apply border-2 border-coo-black shadow-brutal bg-white;
+  }
+
+  /* Phone container — centers the "app" on desktop */
+  .phone-shell {
+    @apply mx-auto w-full max-w-phone min-h-screen relative overflow-x-hidden;
   }
 }
