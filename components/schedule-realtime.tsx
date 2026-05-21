@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useTransition } from "react";
 import { format } from "date-fns";
-import { Plus, AlertTriangle, Download } from "lucide-react";
+import { AlertTriangle, Download } from "lucide-react";
 import toast from "react-hot-toast";
 
 import { createClient } from "@/lib/supabase/client";
@@ -28,6 +28,7 @@ import type { Profile, ShiftType, UserRole } from "@/lib/types";
 interface SlotTarget {
   row: WeekShiftRow | null;
   shiftType: ShiftType;
+  slotIndex: number; // 0 = Bar, 1 = Σερβιτόρος, 2+ = extra
 }
 
 interface ScheduleRealtimeProps {
@@ -63,6 +64,7 @@ export function ScheduleRealtime({
   const dayMap: DayShiftMap = groupByDayAndType(rows);
   const dayShifts = dayMap[selectedDate] ?? { morning: [], evening: [], split: [] };
   const activeDates = new Set(rows.map((r) => r.date));
+  // A shift type is "empty" when no one is assigned at all
   const emptyCount = (["morning", "evening", "split"] as ShiftType[]).reduce(
     (acc, t) => acc + (dayShifts[t].length === 0 ? 1 : 0),
     0
@@ -99,9 +101,9 @@ export function ScheduleRealtime({
 
   // ── Handlers ──────────────────────────────────────────────────────────────
 
-  function handleSlotClick(row: WeekShiftRow | null, shiftType: ShiftType) {
+  function handleSlotClick(row: WeekShiftRow | null, shiftType: ShiftType, slotIndex: number) {
     if (isAdmin) {
-      setSlotTarget({ row, shiftType });
+      setSlotTarget({ row, shiftType, slotIndex });
     } else if (row?.employee_id === currentUserId) {
       setSwapTarget(row);
     }
@@ -229,34 +231,22 @@ export function ScheduleRealtime({
             rows={dayShifts[type]}
             currentUserId={currentUserId}
             isAdmin={isAdmin}
-            expectedSlots={1}
-            onSlotClick={(row, t) => handleSlotClick(row, t)}
+            expectedSlots={type === "split" ? 1 : 2}
+            onSlotClick={(row, t, idx) => handleSlotClick(row, t, idx)}
           />
         ))}
       </div>
-
-      {isAdmin && (
-        <button
-          onClick={() => setSlotTarget({ row: null, shiftType: "morning" })}
-          className="fixed bottom-24 right-4 w-14 h-14 bg-coo-yellow border-2 border-coo-black
-                     flex items-center justify-center z-30
-                     active:shadow-none active:translate-x-[2px] active:translate-y-[2px]
-                     transition-all duration-75"
-          style={{ boxShadow: "4px 4px 0 #0A0A0A" }}
-          aria-label="Νέα ανάθεση"
-        >
-          <Plus size={24} strokeWidth={2.5} className="text-coo-black" />
-        </button>
-      )}
 
       {/* Admin: assign modal */}
       <Modal
         open={slotTarget !== null}
         onClose={() => setSlotTarget(null)}
         title={
-          slotTarget?.row
-            ? `${SHIFT_CONFIG[slotTarget.shiftType]?.label} — Αλλαγή`
-            : "Ανάθεση βάρδιας"
+          slotTarget
+            ? `${SHIFT_CONFIG[slotTarget.shiftType]?.label} — ${
+                slotTarget.slotIndex === 0 ? "Bar" : slotTarget.slotIndex === 1 ? "Σερβιτόρος" : "Επιπλέον"
+              }`
+            : "Ανάθεση"
         }
       >
         {slotTarget && (

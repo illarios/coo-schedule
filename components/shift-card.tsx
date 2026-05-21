@@ -74,11 +74,11 @@ function EmptySlot({
 
 interface ShiftCardProps {
   shiftType: ShiftType;
-  rows: WeekShiftRow[]; // all shifts of this type for the day
+  rows: WeekShiftRow[];
   currentUserId?: string;
   isAdmin?: boolean;
-  expectedSlots?: number; // how many employees should be assigned (default 1)
-  onSlotClick?: (row: WeekShiftRow | null, shiftType: ShiftType) => void;
+  expectedSlots?: number;
+  onSlotClick?: (row: WeekShiftRow | null, shiftType: ShiftType, slotIndex: number) => void;
 }
 
 const CARD_STYLES: Record<
@@ -119,12 +119,11 @@ export function ShiftCard({
     ...Array(Math.max(0, expectedSlots - rows.length)).fill(null),
   ];
 
+  const SLOT_LABELS = ["Bar", "Σερβιτόρος", "Επιπλέον"];
+
   return (
     <div
-      className={cn(
-        "border-2 p-4",
-        style.wrapper
-      )}
+      className={cn("border-2 p-4", style.wrapper)}
       style={{ boxShadow: "4px 4px 0 #0A0A0A" }}
     >
       {/* Header */}
@@ -135,56 +134,72 @@ export function ShiftCard({
             <p className={cn("font-archivo text-base leading-none", style.header)}>
               {cfg.label}
             </p>
-            <p
-              className={cn(
-                "font-dm text-xs mt-0.5",
-                style.dark ? "text-white/60" : "text-coo-black/55"
-              )}
-            >
+            <p className={cn("font-dm text-xs mt-0.5", style.dark ? "text-white/60" : "text-coo-black/55")}>
               {cfg.hours}
             </p>
           </div>
         </div>
-
-        {/* Hours badge */}
-        <span
-          className={cn(
-            "font-archivo text-xs px-2 py-1 border-2",
-            style.dark
-              ? "border-white/20 text-white/70"
-              : "border-coo-black/20 text-coo-black/60"
-          )}
-        >
+        <span className={cn("font-archivo text-xs px-2 py-1 border-2", style.dark ? "border-white/20 text-white/70" : "border-coo-black/20 text-coo-black/60")}>
           {cfg.hoursCount}ω
         </span>
       </div>
 
-      {/* Employee chips */}
-      <div className="flex flex-wrap gap-2">
+      {/* Employee slots */}
+      <div className="flex flex-col gap-2">
         {slots.map((row, i) => {
           const isCurrentUser = row?.employee_id === currentUserId;
-          return row ? (
-            <div key={row.shift_id} className="flex flex-col gap-1">
-              <EmpChip
-                row={row}
-                dark={style.dark}
-                isCurrentUser={isCurrentUser}
-                onClick={() => onSlotClick?.(row, shiftType)}
-              />
-              {isCurrentUser && !isAdmin && (
-                <span className="font-dm text-[10px] text-coo-red text-center leading-none">
-                  πάτα για αλλαγή
-                </span>
+          const label = SLOT_LABELS[i] ?? `Θέση ${i + 1}`;
+          return (
+            <div key={row ? row.shift_id : `empty-${i}`} className="flex items-center gap-2">
+              {/* Slot role label */}
+              <span className={cn(
+                "font-archivo text-[10px] w-20 shrink-0 uppercase tracking-wide",
+                style.dark ? "text-white/40" : "text-coo-black/35"
+              )}>
+                {label}
+              </span>
+              {row ? (
+                <div className="flex flex-col gap-0.5">
+                  <EmpChip
+                    row={row}
+                    dark={style.dark}
+                    isCurrentUser={isCurrentUser}
+                    onClick={() => onSlotClick?.(row, shiftType, i)}
+                  />
+                  {isCurrentUser && !isAdmin && (
+                    <span className="font-dm text-[10px] text-coo-red leading-none pl-1">
+                      πάτα για αλλαγή
+                    </span>
+                  )}
+                </div>
+              ) : (
+                <EmptySlot
+                  dark={style.dark}
+                  onClick={isAdmin ? () => onSlotClick?.(null, shiftType, i) : undefined}
+                />
               )}
             </div>
-          ) : (
-            <EmptySlot
-              key={`empty-${i}`}
-              dark={style.dark}
-              onClick={isAdmin ? () => onSlotClick?.(null, shiftType) : undefined}
-            />
           );
         })}
+
+        {/* Extra slot button for admin (3rd employee) */}
+        {isAdmin && rows.length >= expectedSlots && (
+          <div className="flex items-center gap-2">
+            <span className={cn("font-archivo text-[10px] w-20 shrink-0 uppercase tracking-wide", style.dark ? "text-white/40" : "text-coo-black/35")}>
+              Επιπλέον
+            </span>
+            <button
+              onClick={() => onSlotClick?.(null, shiftType, rows.length)}
+              className={cn(
+                "inline-flex items-center gap-1 px-2.5 py-1.5 border-2 border-dashed",
+                "font-dm text-xs transition-colors",
+                style.dark ? "border-white/20 text-white/40 hover:border-white/50" : "border-coo-black/20 text-coo-black/35 hover:border-coo-black/60"
+              )}
+            >
+              <span>＋</span> Προσθήκη
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
