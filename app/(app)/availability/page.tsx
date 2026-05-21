@@ -43,17 +43,13 @@ export default async function AvailabilityPage() {
   const { from, to, dates } = getNextWeekDates();
 
   if (profile.role === "admin") {
-    // Admin: fetch both own + all employees availability in parallel
-    const [myAvailability, allAvailability, employees] = await Promise.all([
-      getMyAvailability(supabase, profile.id, from, to).catch(() => []),
+    const [allAvailability, employees] = await Promise.all([
       getAllAvailability(supabase, from, to).catch(() => []),
       getActiveEmployeeProfiles(supabase).catch(() => []),
     ]);
 
     return (
       <AvailabilityAdminView
-        userId={profile.id}
-        myAvailability={myAvailability as Availability[]}
         allAvailability={allAvailability}
         employees={employees}
         nextWeekDates={dates}
