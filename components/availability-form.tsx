@@ -7,7 +7,7 @@ import { ChevronDown, ChevronUp, Clock } from "lucide-react";
 import toast from "react-hot-toast";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
-import { upsertAvailability } from "@/lib/queries/availability";
+import { upsertAvailability, deleteAvailability } from "@/lib/queries/availability";
 import { AVAILABILITY_CONFIG } from "@/lib/constants";
 import type { Availability, AvailabilityType } from "@/lib/types";
 
@@ -251,20 +251,29 @@ export function AvailabilityForm({ userId, initial }: AvailabilityFormProps) {
 
   const handleSelect = useCallback(
     (dateStr: string, types: AvailabilityType[], note: string | null) => {
-      // Optimistic
-      setSaved((prev) => ({ ...prev, [dateStr]: types }));
+      // Optimistic update
+      setSaved((prev) => {
+        const copy = { ...prev };
+        if (types.length === 0) delete copy[dateStr];
+        else copy[dateStr] = types;
+        return copy;
+      });
 
       // Debounce 400ms
       if (timers.current[dateStr]) clearTimeout(timers.current[dateStr]);
       timers.current[dateStr] = setTimeout(async () => {
         setSaving((p) => ({ ...p, [dateStr]: true }));
         try {
-          await upsertAvailability(supabase, userId, dateStr, types, note);
-          toast.success("✓ Αποθηκεύτηκε", {
-            id: `avail-${dateStr}`,
-            duration: 1800,
-            style: { fontFamily: "'DM Sans', sans-serif" },
-          });
+          if (types.length === 0) {
+            await deleteAvailability(supabase, userId, dateStr);
+          } else {
+            await upsertAvailability(supabase, userId, dateStr, types, note);
+            toast.success("✓ Αποθηκεύτηκε", {
+              id: `avail-${dateStr}`,
+              duration: 1800,
+              style: { fontFamily: "'DM Sans', sans-serif" },
+            });
+          }
         } catch {
           toast.error("Σφάλμα αποθήκευσης");
           setSaved((prev) => {

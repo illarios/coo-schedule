@@ -41,6 +41,21 @@ export async function upsertAvailability(
   return data as Availability;
 }
 
+// ── Delete a single day availability ───────────────────────────────────────
+
+export async function deleteAvailability(
+  supabase: SupabaseClient,
+  userId: string,
+  date: string
+): Promise<void> {
+  const { error } = await supabase
+    .from("availability")
+    .delete()
+    .eq("user_id", userId)
+    .eq("date", date);
+  if (error) throw error;
+}
+
 // ── Admin: all employees availability for a range ──────────────────────────
 
 export interface AllAvailabilityRow {
