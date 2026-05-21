@@ -20,15 +20,13 @@ const AVAIL_BUTTONS: { type: AvailabilityType; icon: string; label: string }[] =
   { type: "off",     icon: "🚫", label: "ΡΕΠΟ" },
 ];
 
-// Deadline: Thursday 22:00 of the CURRENT week (4 days before next Monday)
-// After that passes, the next cycle opens immediately for the week after next.
+// Deadline: Sunday 23:59 of the current week (eve of next Monday)
 function getDeadline(): Date {
   const nextMonday = addWeeks(startOfWeek(new Date(), { weekStartsOn: 1 }), 1);
-  // Thursday before next Monday = next Monday - 4 days
-  const thursday = new Date(nextMonday);
-  thursday.setDate(nextMonday.getDate() - 4);
-  thursday.setHours(22, 0, 0, 0);
-  return thursday;
+  const sunday = new Date(nextMonday);
+  sunday.setDate(nextMonday.getDate() - 1);
+  sunday.setHours(23, 59, 59, 0);
+  return sunday;
 }
 
 function useCountdown(deadline: Date) {
