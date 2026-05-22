@@ -17,6 +17,7 @@ import {
   groupByDayAndType,
   assignShift,
   createShift,
+  setShiftConfirmed,
   getActiveEmployees,
   type WeekShiftRow,
   type DayShiftMap,
@@ -158,6 +159,20 @@ export function ScheduleRealtime({
     });
   }
 
+  async function handleConfirmToggle(shiftId: string, confirmed: boolean) {
+    setRows((prev) =>
+      prev.map((r) => r.shift_id === shiftId ? { ...r, confirmed } : r)
+    );
+    try {
+      await setShiftConfirmed(supabase, shiftId, confirmed);
+    } catch {
+      setRows((prev) =>
+        prev.map((r) => r.shift_id === shiftId ? { ...r, confirmed: !confirmed } : r)
+      );
+      toast.error("Σφάλμα αποθήκευσης");
+    }
+  }
+
   async function handleRemove() {
     if (!slotTarget?.row) return;
     const shiftId = slotTarget.row.shift_id;
@@ -233,6 +248,7 @@ export function ScheduleRealtime({
             isAdmin={isAdmin}
             expectedSlots={type === "split" ? 1 : 2}
             onSlotClick={(row, t, idx) => handleSlotClick(row, t, idx)}
+            onConfirmToggle={isAdmin ? handleConfirmToggle : undefined}
           />
         ))}
       </div>

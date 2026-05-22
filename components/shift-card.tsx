@@ -10,38 +10,64 @@ import type { WeekShiftRow } from "@/lib/queries/shifts";
 interface EmpChipProps {
   row: WeekShiftRow;
   isCurrentUser?: boolean;
+  isAdmin?: boolean;
   onClick?: () => void;
-  dark?: boolean; // for evening card (dark bg)
+  onConfirmToggle?: (confirmed: boolean) => void;
+  dark?: boolean;
 }
 
-function EmpChip({ row, isCurrentUser, onClick, dark }: EmpChipProps) {
+function EmpChip({ row, isCurrentUser, isAdmin, onClick, onConfirmToggle, dark }: EmpChipProps) {
   const initial = (row.nickname ?? row.full_name ?? "?").charAt(0).toUpperCase();
 
   return (
-    <button
-      onClick={onClick}
-      className={cn(
-        "inline-flex items-center gap-1.5 px-2.5 py-1.5",
-        "border-2 font-dm text-sm font-semibold leading-none",
-        "active:scale-95 transition-transform",
-        isCurrentUser
-          ? "border-coo-red"
-          : dark
-          ? "border-white/30"
-          : "border-coo-black",
-        dark ? "text-white" : "text-coo-black"
-      )}
-      style={!isCurrentUser ? undefined : { boxShadow: "2px 2px 0 #E63946" }}
-    >
-      <span
-        className="w-6 h-6 rounded-full flex items-center justify-center
-                   font-archivo text-[10px] text-white shrink-0 border-2 border-white/50"
-        style={{ backgroundColor: row.color ?? "#E63946" }}
+    <div className="inline-flex items-center gap-1.5">
+      <button
+        onClick={onClick}
+        className={cn(
+          "inline-flex items-center gap-1.5 px-2.5 py-1.5",
+          "border-2 font-dm text-sm font-semibold leading-none",
+          "active:scale-95 transition-transform",
+          isCurrentUser
+            ? "border-coo-red"
+            : dark
+            ? "border-white/30"
+            : "border-coo-black",
+          dark ? "text-white" : "text-coo-black"
+        )}
+        style={!isCurrentUser ? undefined : { boxShadow: "2px 2px 0 #E63946" }}
       >
-        {initial}
-      </span>
-      {row.nickname ?? row.full_name}
-    </button>
+        <span
+          className="w-6 h-6 rounded-full flex items-center justify-center
+                     font-archivo text-[10px] text-white shrink-0 border-2 border-white/50"
+          style={{ backgroundColor: row.color ?? "#E63946" }}
+        >
+          {initial}
+        </span>
+        {row.nickname ?? row.full_name}
+      </button>
+
+      {/* Confirmed checkbox — admin can toggle, employees see read-only */}
+      <button
+        onClick={isAdmin ? () => onConfirmToggle?.(!row.confirmed) : undefined}
+        disabled={!isAdmin}
+        title={row.confirmed ? "Επιβεβαιωμένος" : "Μη επιβεβαιωμένος"}
+        className={cn(
+          "w-6 h-6 border-2 flex items-center justify-center shrink-0 transition-colors",
+          row.confirmed
+            ? "bg-green-500 border-green-700 text-white"
+            : dark
+            ? "bg-transparent border-white/30"
+            : "bg-transparent border-coo-black/30",
+          isAdmin && "cursor-pointer hover:border-green-500"
+        )}
+      >
+        {row.confirmed && (
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <path d="M2 6l3 3 5-5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        )}
+      </button>
+    </div>
   );
 }
 
@@ -79,6 +105,7 @@ interface ShiftCardProps {
   isAdmin?: boolean;
   expectedSlots?: number;
   onSlotClick?: (row: WeekShiftRow | null, shiftType: ShiftType, slotIndex: number) => void;
+  onConfirmToggle?: (shiftId: string, confirmed: boolean) => void;
 }
 
 const CARD_STYLES: Record<
@@ -109,6 +136,7 @@ export function ShiftCard({
   isAdmin,
   expectedSlots = 1,
   onSlotClick,
+  onConfirmToggle,
 }: ShiftCardProps) {
   const cfg = SHIFT_CONFIG[shiftType];
   const style = CARD_STYLES[shiftType];
@@ -166,7 +194,9 @@ export function ShiftCard({
                     row={row}
                     dark={style.dark}
                     isCurrentUser={isCurrentUser}
+                    isAdmin={isAdmin}
                     onClick={() => onSlotClick?.(row, shiftType, i)}
+                    onConfirmToggle={(confirmed) => onConfirmToggle?.(row.shift_id, confirmed)}
                   />
                   {isCurrentUser && !isAdmin && (
                     <span className="font-dm text-[10px] text-coo-red leading-none pl-1">

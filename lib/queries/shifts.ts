@@ -17,6 +17,7 @@ export interface WeekShiftRow {
   nickname: string | null;
   color: string | null;
   avatar_url: string | null;
+  confirmed: boolean;
 }
 
 export async function getWeekSchedule(
@@ -40,6 +41,20 @@ export async function assignShift(
   const { error } = await supabase
     .from("shifts")
     .update({ assigned_to: employeeId })
+    .eq("id", shiftId);
+  if (error) throw error;
+}
+
+// ── Toggle confirmed flag (admin only) ────────────────────────────────────
+
+export async function setShiftConfirmed(
+  supabase: SupabaseClient,
+  shiftId: string,
+  confirmed: boolean
+) {
+  const { error } = await supabase
+    .from("shifts")
+    .update({ confirmed })
     .eq("id", shiftId);
   if (error) throw error;
 }

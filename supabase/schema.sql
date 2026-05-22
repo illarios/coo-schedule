@@ -173,7 +173,8 @@ returns table (
   employee_id       uuid,
   full_name         text,
   nickname          text,
-  color             text
+  color             text,
+  confirmed         boolean
 )
 language sql
 stable
@@ -190,7 +191,8 @@ as $$
     p.id            as employee_id,
     p.full_name,
     p.nickname,
-    p.color
+    p.color,
+    s.confirmed
   from public.shifts s
   left join public.profiles p on p.id = s.assigned_to
   where s.date >= start_date

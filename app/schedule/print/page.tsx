@@ -98,7 +98,10 @@ export default async function PrintSchedulePage({
                           <span className="text-gray-300 text-xs">—</span>
                         ) : (
                           shifts.map((s) => (
-                            <div key={s.shift_id} className="font-dm text-sm">
+                            <div key={s.shift_id} className="font-dm text-sm flex items-center gap-1.5">
+                              <span className={s.confirmed ? "text-green-600 font-bold" : "text-gray-300"}>
+                                {s.confirmed ? "✓" : "☐"}
+                              </span>
                               {s.nickname ?? <span className="text-gray-400 text-xs italic">Κενό</span>}
                             </div>
                           ))
