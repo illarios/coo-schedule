@@ -15,7 +15,6 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { href: "/schedule",     label: "Πρόγραμμα",    icon: "📅" },
   { href: "/availability", label: "Διαθέσιμος",   icon: "✋" },
-  { href: "/history",      label: "Ώρες",          icon: "⏱" },
   { href: "/admin",        label: "Admin",         icon: "👑", adminOnly: true },
 ];
 
