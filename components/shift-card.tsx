@@ -169,9 +169,11 @@ export function ShiftCard({
             </p>
           </div>
         </div>
-        <span className={cn("font-archivo text-xs px-2 py-1 border-2", style.dark ? "border-white/20 text-white/70" : "border-coo-black/20 text-coo-black/60")}>
-          {cfg.hoursCount}ω
-        </span>
+        {cfg.hoursCount > 0 && (
+          <span className={cn("font-archivo text-xs px-2 py-1 border-2", style.dark ? "border-white/20 text-white/70" : "border-coo-black/20 text-coo-black/60")}>
+            {cfg.hoursCount}ω
+          </span>
+        )}
       </div>
 
       {/* Employee slots */}

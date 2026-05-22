@@ -7,18 +7,18 @@ export const SHIFT_CONFIG: Record<
   morning: {
     label: "ΠΡΩΙ",
     icon: "🌅",
-    hours: "08:00–15:00",
+    hours: "09:00–17:00",
     bg: "bg-coo-yellow",
     text: "text-coo-black",
-    hoursCount: 7,
+    hoursCount: 8,
   },
   evening: {
     label: "ΒΡΑΔΥ",
     icon: "🌙",
-    hours: "16:00–23:00",
+    hours: "17:00–κλείσιμο",
     bg: "bg-coo-black",
     text: "text-coo-yellow",
-    hoursCount: 7,
+    hoursCount: 0,
   },
   split: {
     label: "ΣΠΑΣΤΟ",

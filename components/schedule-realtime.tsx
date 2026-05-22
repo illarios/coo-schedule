@@ -111,9 +111,9 @@ export function ScheduleRealtime({
   }
 
   const SHIFT_DEFAULTS: Record<ShiftType, { start_time: string; end_time: string; split_break_start?: string; split_break_end?: string }> = {
-    morning: { start_time: "08:00:00", end_time: "15:00:00" },
-    evening: { start_time: "16:00:00", end_time: "23:00:00" },
-    split:   { start_time: "11:00:00", end_time: "23:00:00", split_break_start: "15:00:00", split_break_end: "19:00:00" },
+    morning: { start_time: "09:00:00", end_time: "17:00:00" },
+    evening: { start_time: "17:00:00", end_time: "23:59:00" },
+    split:   { start_time: "09:00:00", end_time: "23:59:00", split_break_start: "17:00:00", split_break_end: "19:00:00" },
   };
 
   async function handleAssign(employeeId: string | null) {
