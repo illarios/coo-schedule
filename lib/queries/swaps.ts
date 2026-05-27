@@ -215,9 +215,9 @@ export async function createNotification(
   if (error) throw error;
 }
 
-// ── Fetch available colleagues for a date ─────────────────────────────────
-// Returns employees who have declared availability ≠ 'off' for that date,
-// excluding the requester themselves.
+// ── Fetch colleagues for swap selection ───────────────────────────────────
+// Returns all employees except the requester. Availability is shown
+// informatively but does NOT filter anyone out.
 
 export interface AvailableColleague {
   id: string;
@@ -233,41 +233,39 @@ export async function getAvailableColleagues(
   date: string,
   excludeUserId: string
 ): Promise<AvailableColleague[]> {
-  // availability is now text[] — fetch all rows for the date excluding self,
-  // then filter out those whose array contains only "off" or is empty
-  const { data, error } = await supabase
+  // Fetch all employee profiles except self
+  const { data: profiles, error: profilesError } = await supabase
+    .from("profiles")
+    .select("id, nickname, full_name, color, avatar_url")
+    .eq("role", "employee")
+    .neq("id", excludeUserId);
+
+  if (profilesError) throw profilesError;
+
+  // Fetch availability for this date (best-effort, no filter)
+  const { data: avail } = await supabase
     .from("availability")
-    .select("user_id, availability, profiles!user_id(id, nickname, full_name, color, avatar_url)")
-    .eq("date", date)
-    .neq("user_id", excludeUserId);
+    .select("user_id, availability")
+    .eq("date", date);
 
-  if (error) throw error;
+  const availMap = new Map<string, string[]>(
+    ((avail ?? []) as { user_id: string; availability: string[] }[]).map(
+      (r) => [r.user_id, r.availability]
+    )
+  );
 
-  return ((data ?? []) as unknown[])
-    .map((row: unknown) => {
-      const r = row as {
-        user_id: string;
-        availability: string[];
-        profiles: {
-          id: string;
-          nickname: string;
-          full_name: string;
-          color: string;
-          avatar_url: string | null;
-        } | null;
-      };
-      return {
-        id: r.profiles?.id ?? r.user_id,
-        nickname: r.profiles?.nickname ?? "",
-        full_name: r.profiles?.full_name ?? "",
-        color: r.profiles?.color ?? "#FFD800",
-        avatar_url: r.profiles?.avatar_url ?? null,
-        availability: r.availability,
-      };
-    })
-    .filter((c) => {
-      // exclude if no availability or only "off"
-      const types = c.availability as string[];
-      return types.length > 0 && !(types.length === 1 && types[0] === "off");
-    });
+  return ((profiles ?? []) as {
+    id: string;
+    nickname: string;
+    full_name: string;
+    color: string;
+    avatar_url: string | null;
+  }[]).map((p) => ({
+    id: p.id,
+    nickname: p.nickname ?? "",
+    full_name: p.full_name ?? "",
+    color: p.color ?? "#FFD800",
+    avatar_url: p.avatar_url ?? null,
+    availability: availMap.get(p.id) ?? [],
+  }));
 }
