@@ -194,9 +194,10 @@ export async function rejectSwap(
 }
 
 // ── Notify a user (insert into notifications table) ───────────────────────
+// Uses the API route to bypass RLS (employees can't insert for other users).
 
 export async function createNotification(
-  supabase: SupabaseClient,
+  _supabase: SupabaseClient,
   payload: {
     user_id: string;
     type: string;
@@ -205,14 +206,15 @@ export async function createNotification(
     related_id?: string;
   }
 ): Promise<void> {
-  const { error } = await supabase.from("notifications").insert({
-    user_id: payload.user_id,
-    type: payload.type,
-    title: payload.title,
-    body: payload.body,
-    related_id: payload.related_id ?? null,
+  const res = await fetch("/api/notifications/create", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
   });
-  if (error) throw error;
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error ?? "Failed to create notification");
+  }
 }
 
 // ── Fetch colleagues for swap selection ───────────────────────────────────
