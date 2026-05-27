@@ -10,11 +10,13 @@ interface NavItem {
   label: string;
   icon: string;
   adminOnly?: boolean;
+  employeeOnly?: boolean;
 }
 
 const NAV_ITEMS: NavItem[] = [
   { href: "/schedule",     label: "Πρόγραμμα",    icon: "📅" },
   { href: "/availability", label: "Διαθέσιμος",   icon: "✋" },
+  { href: "/swaps",        label: "Αλλαγές",       icon: "🔄", employeeOnly: true },
   { href: "/admin",        label: "Admin",         icon: "👑", adminOnly: true },
 ];
 
@@ -31,9 +33,11 @@ export function BottomNav({
 }: BottomNavProps) {
   const pathname = usePathname();
 
-  const visibleItems = NAV_ITEMS.filter(
-    (item) => !item.adminOnly || role === "admin"
-  );
+  const visibleItems = NAV_ITEMS.filter((item) => {
+    if (item.adminOnly) return role === "admin";
+    if (item.employeeOnly) return role !== "admin";
+    return true;
+  });
 
   // Notifications is always last
   const totalCols = visibleItems.length + 1;

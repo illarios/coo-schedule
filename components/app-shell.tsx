@@ -326,10 +326,9 @@ function resolveNotifUrl(n: AppNotification): string | null {
     case "reminder":
       return "/schedule";
     case "swap_request":
-      return "/schedule";
     case "swap_approved":
     case "swap_rejected":
-      return "/schedule";
+      return "/swaps";
     default:
       return null;
   }
